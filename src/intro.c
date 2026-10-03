@@ -1091,7 +1091,9 @@ static u8 SetUpCopyrightScreen(void)
     case COPYRIGHT_EMULATOR_BLEND:
         REG_DISPCNT = DISPCNT_MODE_0 | DISPCNT_OBJ_1D_MAP | DISPCNT_BG0_ON;
     default:
-        SetMainCallback2(CB2_InitTitleScreen);
+        UpdatePaletteFade();
+        gMain.state++;
+        GameCubeMultiBoot_Main(&gMultibootProgramStruct);
         break;
     case COPYRIGHT_START_FADE:
         GameCubeMultiBoot_Main(&gMultibootProgramStruct);
