@@ -29,7 +29,8 @@
 #include "constants/rgb.h"
 #include "constants/battle_anim.h"
 #include "pokemon.h"
-
+#include "main_menu.h"
+#include "title_screen.h"
 /*
     The intro is grouped into the following scenes
     Scene 0. Copyright screen
@@ -1090,9 +1091,7 @@ static u8 SetUpCopyrightScreen(void)
     case COPYRIGHT_EMULATOR_BLEND:
         REG_DISPCNT = DISPCNT_MODE_0 | DISPCNT_OBJ_1D_MAP | DISPCNT_BG0_ON;
     default:
-        UpdatePaletteFade();
-        gMain.state++;
-        GameCubeMultiBoot_Main(&gMultibootProgramStruct);
+        SetMainCallback2(CB2_InitTitleScreen);
         break;
     case COPYRIGHT_START_FADE:
         GameCubeMultiBoot_Main(&gMultibootProgramStruct);
