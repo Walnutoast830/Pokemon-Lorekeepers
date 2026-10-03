@@ -1815,7 +1815,7 @@ LittlerootTown_EventScript_GiveRunningShoes::
 # 908 "data/maps/LittlerootTown/scripts.pory"
 LittlerootTown_Text_OurNewHomeLetsGoInside:
 # 909 "data/maps/LittlerootTown/scripts.pory"
-	.string "MOM: {PLAYER}, we're here, TEST!\p"
+	.string "MOM: {PLAYER}, we're here, honey!\p"
 # 910 "data/maps/LittlerootTown/scripts.pory"
 	.string "It must be tiring riding with our things\n"
 # 911 "data/maps/LittlerootTown/scripts.pory"
