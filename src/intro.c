@@ -1107,7 +1107,7 @@ static u8 SetUpCopyrightScreen(void)
         if (UpdatePaletteFade())
             break;
 #if EXPANSION_INTRO == TRUE
-        SetMainCallback2(CB2_InitTitleScreen);
+        SetMainCallback2(CB2_ExpansionIntro);
         CreateTask(Task_HandleExpansionIntro, 0);
 #else
         CreateTask(Task_Scene1_Load, 0);
