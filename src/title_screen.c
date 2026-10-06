@@ -360,6 +360,7 @@ static const struct CompressedSpriteSheet sPokemonLogoShineSpriteSheet[] =
 #define tPointless  data[2] // Incremented but never used to do anything.
 #define tBg2Y       data[3]
 #define tBg1Y       data[4]
+#define tBg2X       data[5]
 
 // Sprite data for sVersionBannerLeftSpriteTemplate / sVersionBannerRightSpriteTemplate
 #define sAlphaBlendIdx data[0]
@@ -624,6 +625,7 @@ void CB2_InitTitleScreen(void)
         gTasks[taskId].tSkipToNext = FALSE;
         gTasks[taskId].tPointless = -16;
         gTasks[taskId].tBg2Y = -32;
+        gTasks[taskId].tBg2X = -29;
         gMain.state = 3;
         break;
     }
@@ -634,10 +636,10 @@ void CB2_InitTitleScreen(void)
         break;
     case 4:
         PanFadeAndZoomScreen(DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2, 0x100, 0);
-        SetGpuReg(REG_OFFSET_BG2X_L, -29 * 256);
-        SetGpuReg(REG_OFFSET_BG2X_H, -1);
         SetGpuReg(REG_OFFSET_BG2Y_L, -32 * 256);
         SetGpuReg(REG_OFFSET_BG2Y_H, -1);
+        SetGpuReg(REG_OFFSET_BG2X_L, -29 * 256);
+        SetGpuReg(REG_OFFSET_BG2X_H, -1);
         SetGpuReg(REG_OFFSET_WIN0H, 0);
         SetGpuReg(REG_OFFSET_WIN0V, 0);
         SetGpuReg(REG_OFFSET_WIN1H, 0);
@@ -731,6 +733,7 @@ static void Task_TitleScreenPhase1(u8 taskId)
 static void Task_TitleScreenPhase2(u8 taskId)
 {
     u32 yPos;
+    u32 xPos;
 
     // Skip to next phase when A, B, Start, or Select is pressed
     if (JOY_NEW(A_B_START_SELECT) || gTasks[taskId].tSkipToNext)
@@ -765,16 +768,32 @@ static void Task_TitleScreenPhase2(u8 taskId)
 
     if (!(gTasks[taskId].tCounter & 3) && gTasks[taskId].tPointless != 0)
         gTasks[taskId].tPointless++;
-    if (!(gTasks[taskId].tCounter & 1) && gTasks[taskId].tBg2Y != 0)
+    if (!(gTasks[taskId].tCounter & 1))
+{
+    if (gTasks[taskId].tBg2Y < 0)
         gTasks[taskId].tBg2Y++;
+
+    if (gTasks[taskId].tBg2X < 2)
+    {
+        gTasks[taskId].tBg2X++;
+        if (gTasks[taskId].tBg2X > 2)
+            gTasks[taskId].tBg2X = 2;
+    }
+}
+    //if (!(gTasks[taskId].tCounter & 1) && gTasks[taskId].tBg2X != 8)
+        //gTasks[taskId].tBg2X++;
 
     // Slide Pokémon logo up
     yPos = gTasks[taskId].tBg2Y * 256;
     SetGpuReg(REG_OFFSET_BG2Y_L, yPos);
     SetGpuReg(REG_OFFSET_BG2Y_H, yPos / 0x10000);
 
-    gTasks[taskId].data[5] = 15; // Unused
-    gTasks[taskId].data[6] = 6;  // Unused
+    xPos = gTasks[taskId].tBg2X * 256;
+    SetGpuReg(REG_OFFSET_BG2X_L, xPos);
+    SetGpuReg(REG_OFFSET_BG2X_H, xPos / 0x10000);
+
+    // gTasks[taskId].data[5] = 15; // Unused
+    // gTasks[taskId].data[6] = 6;  // Unused
 }
 
 // Show Rayquaza silhouette and process main title screen input
@@ -808,8 +827,10 @@ static void Task_TitleScreenPhase3(u8 taskId)
     }
     else
     {
-        SetGpuReg(REG_OFFSET_BG2Y_L, 0);
+        SetGpuReg(REG_OFFSET_BG2Y_L, 0 * 256);
         SetGpuReg(REG_OFFSET_BG2Y_H, 0);
+        SetGpuReg(REG_OFFSET_BG2X_L, 2 * 256);
+        SetGpuReg(REG_OFFSET_BG2X_H, 0);
         if (++gTasks[taskId].tCounter & 1)
         {
             gTasks[taskId].tBg1Y++;
