@@ -43,6 +43,18 @@ enum {
 #define BERRY_UPDATE_BUTTON_COMBO (B_BUTTON | SELECT_BUTTON)
 #define A_B_START_SELECT (A_BUTTON | B_BUTTON | START_BUTTON | SELECT_BUTTON)
 
+
+#define TITLE_PAL_START 203
+#define TITLE_PAL_COUNT 53 
+
+#define TOWER_RING_PAL_INDEX 255
+#define TOWER_RING_BASE_R 7
+#define TOWER_RING_BASE_G 6
+#define TOWER_RING_BASE_B 5
+#define TOWER_RING_GLOW_R 31 
+#define TOWER_RING_GLOW_G 27
+#define TOWER_RING_GLOW_B 12
+
 static void MainCB2(void);
 static void Task_TitleScreenPhase1(u8);
 static void Task_TitleScreenPhase2(u8);
@@ -53,6 +65,7 @@ static void CB2_GoToResetRtcScreen(void);
 static void CB2_GoToBerryFixScreen(void);
 static void CB2_GoToCopyrightScreen(void);
 static void UpdateLegendaryMarkingColor(u8);
+static void UpdateTowerRingColor(u8);
 
 static void SpriteCB_VersionBannerLeft(struct Sprite *sprite);
 static void SpriteCB_VersionBannerRight(struct Sprite *sprite);
@@ -66,6 +79,9 @@ static const u32 sTitleScreenRayquazaGfx[] = INCGFX_U32("graphics/title_screen/r
 static const u32 sTitleScreenRayquazaTilemap[] = INCGFX_U32("graphics/title_screen/rayquaza.bin", ".smolTM");
 static const u32 sTitleScreenLogoShineGfx[] = INCGFX_U32("graphics/title_screen/logo_shine.png", ".4bpp.smol");
 static const u32 sTitleScreenCloudsGfx[] = INCGFX_U32("graphics/title_screen/clouds.png", ".4bpp.smol");
+static const u32 sTitleScreenGfx[] = INCGFX_U32("graphics/title_screen/title.png", ".8bpp.smol");
+static const u32 sTitleScreenTilemap[] = INCGFX_U32("graphics/title_screen/title.bin", ".smolTM");
+static const u32 sTitleScreenPalette[] = INCGFX_U32("graphics/title_screen/title.pal", ".gbapal");
 
 
 
@@ -431,19 +447,6 @@ static void CreatePressStartBanner(s16 x, s16 y)
     }
 }
 
-static void CreateCopyrightBanner(s16 x, s16 y)
-{
-    u8 i;
-    u8 spriteId;
-
-    x -= 64;
-    for (i = 0; i < NUM_COPYRIGHT_FRAMES; i++, x += 32)
-    {
-        spriteId = CreateSprite(&sStartCopyrightBannerSpriteTemplate, x, y, 0);
-        StartSpriteAnim(&gSprites[spriteId], i + NUM_PRESS_START_FRAMES);
-    }
-}
-
 #undef sAnimate
 #undef sTimer
 
@@ -600,8 +603,11 @@ void CB2_InitTitleScreen(void)
         DecompressDataWithHeaderVram(gTitleScreenPokemonLogoTilemap, (void *)(BG_SCREEN_ADDR(9)));
         LoadPalette(gTitleScreenBgPalettes, BG_PLTT_ID(0), 15 * PLTT_SIZE_4BPP);
         // bg3
-        DecompressDataWithHeaderVram(sTitleScreenRayquazaGfx, (void *)(BG_CHAR_ADDR(2)));
-        DecompressDataWithHeaderVram(sTitleScreenRayquazaTilemap, (void *)(BG_SCREEN_ADDR(26)));
+        DecompressDataWithHeaderVram(sTitleScreenGfx, (void *)(BG_CHAR_ADDR(2)));
+        DecompressDataWithHeaderVram(sTitleScreenTilemap, (void *)(BG_SCREEN_ADDR(26)));
+        LoadPalette((const u16 *)sTitleScreenPalette + TITLE_PAL_START,
+                    TITLE_PAL_START,
+                    TITLE_PAL_COUNT * sizeof(u16));
         // bg1
         //DecompressDataWithHeaderVram(sTitleScreenCloudsGfx, (void *)(BG_CHAR_ADDR(3)));
         //DecompressDataWithHeaderVram(gTitleScreenCloudsTilemap, (void *)(BG_SCREEN_ADDR(27)));
@@ -649,7 +655,7 @@ void CB2_InitTitleScreen(void)
         SetGpuReg(REG_OFFSET_BLDCNT, BLDCNT_TGT1_BG2 | BLDCNT_EFFECT_LIGHTEN);
         SetGpuReg(REG_OFFSET_BLDALPHA, 0);
         SetGpuReg(REG_OFFSET_BLDY, 12);
-        SetGpuReg(REG_OFFSET_BG0CNT, BGCNT_PRIORITY(3) | BGCNT_CHARBASE(2) | BGCNT_SCREENBASE(26) | BGCNT_16COLOR | BGCNT_TXT256x256);
+        SetGpuReg(REG_OFFSET_BG0CNT, BGCNT_PRIORITY(3) | BGCNT_CHARBASE(2) | BGCNT_SCREENBASE(26) | BGCNT_256COLOR | BGCNT_TXT256x256);
         SetGpuReg(REG_OFFSET_BG1CNT, BGCNT_PRIORITY(2) | BGCNT_CHARBASE(3) | BGCNT_SCREENBASE(27) | BGCNT_16COLOR | BGCNT_TXT256x256);
         SetGpuReg(REG_OFFSET_BG2CNT, BGCNT_PRIORITY(1) | BGCNT_CHARBASE(0) | BGCNT_SCREENBASE(9) | BGCNT_256COLOR | BGCNT_AFF256x256);
         EnableInterrupts(INTR_FLAG_VBLANK);
@@ -703,7 +709,6 @@ static void Task_TitleScreenPhase1(u8 taskId)
     }
     else
     {
-        u8 spriteId;
 
         SetGpuReg(REG_OFFSET_DISPCNT, DISPCNT_MODE_1 | DISPCNT_OBJ_1D_MAP | DISPCNT_BG2_ON | DISPCNT_OBJ_ON);
         SetGpuReg(REG_OFFSET_WININ, 0);
@@ -711,15 +716,6 @@ static void Task_TitleScreenPhase1(u8 taskId)
         SetGpuReg(REG_OFFSET_BLDCNT, BLDCNT_TGT1_OBJ | BLDCNT_EFFECT_BLEND | BLDCNT_TGT2_ALL);
         SetGpuReg(REG_OFFSET_BLDALPHA, BLDALPHA_BLEND(16, 0));
         SetGpuReg(REG_OFFSET_BLDY, 0);
-
-        // Create left side of version banner
-        // spriteId = CreateSprite(&sVersionBannerLeftSpriteTemplate, VERSION_BANNER_LEFT_X, VERSION_BANNER_Y, 0);
-        // gSprites[spriteId].sAlphaBlendIdx = ARRAY_COUNT(gTitleScreenAlphaBlend);
-        // gSprites[spriteId].sParentTaskId = taskId;
-
-        // Create right side of version banner
-        // spriteId = CreateSprite(&sVersionBannerRightSpriteTemplate, VERSION_BANNER_RIGHT_X, VERSION_BANNER_Y, 0);
-        // gSprites[spriteId].sParentTaskId = taskId;
 
         gTasks[taskId].tCounter = 144;
         gTasks[taskId].func = Task_TitleScreenPhase2;
@@ -755,11 +751,9 @@ static void Task_TitleScreenPhase2(u8 taskId)
         SetGpuReg(REG_OFFSET_DISPCNT, DISPCNT_MODE_1
                                     | DISPCNT_OBJ_1D_MAP
                                     | DISPCNT_BG0_ON
-                                    | DISPCNT_BG1_ON
                                     | DISPCNT_BG2_ON
                                     | DISPCNT_OBJ_ON);
         CreatePressStartBanner(START_BANNER_X, 108);
-        //CreateCopyrightBanner(START_BANNER_X, 148);
         if (QUICKSTART && QUICKSTART_HUD)
             CreateQuickstartHud();
         gTasks[taskId].tBg1Y = 0;
@@ -780,8 +774,6 @@ static void Task_TitleScreenPhase2(u8 taskId)
             gTasks[taskId].tBg2X = 2;
     }
 }
-    //if (!(gTasks[taskId].tCounter & 1) && gTasks[taskId].tBg2X != 8)
-        //gTasks[taskId].tBg2X++;
 
     // Slide Pokémon logo up
     yPos = gTasks[taskId].tBg2Y * 256;
@@ -792,8 +784,6 @@ static void Task_TitleScreenPhase2(u8 taskId)
     SetGpuReg(REG_OFFSET_BG2X_L, xPos);
     SetGpuReg(REG_OFFSET_BG2X_H, xPos / 0x10000);
 
-    // gTasks[taskId].data[5] = 15; // Unused
-    // gTasks[taskId].data[6] = 6;  // Unused
 }
 
 // Show Rayquaza silhouette and process main title screen input
@@ -837,7 +827,7 @@ static void Task_TitleScreenPhase3(u8 taskId)
             gBattle_BG1_Y = gTasks[taskId].tBg1Y / 2;
             gBattle_BG1_X = 0;
         }
-        UpdateLegendaryMarkingColor(gTasks[taskId].tCounter);
+        UpdateTowerRingColor(gTasks[taskId].tCounter);
         if ((gMPlayInfo_BGM.status & 0xFFFF) == 0)
         {
             BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_WHITEALPHA);
@@ -879,16 +869,17 @@ static void CB2_GoToBerryFixScreen(void)
     }
 }
 
-static void UpdateLegendaryMarkingColor(u8 frameNum)
+
+static void UpdateTowerRingColor(u8 frameNum)
 {
     if ((frameNum % 4) == 0) // Change color every 4th frame
     {
-        s32 intensity = Cos(frameNum, Q_8_8(0.5)) + Q_8_8(0.5);
-        u32 r = 31 - Q_8_8_TO_INT(intensity * 31);
-        u32 g = 31 - Q_8_8_TO_INT(intensity * 22);
-        u32 b = 12;
+        s32 intensity = Q_8_8(0.5) - Cos(frameNum, Q_8_8(0.5));
+        u32 r = TOWER_RING_BASE_R + Q_8_8_TO_INT(intensity * (TOWER_RING_GLOW_R - TOWER_RING_BASE_R));
+        u32 g = TOWER_RING_BASE_G + Q_8_8_TO_INT(intensity * (TOWER_RING_GLOW_G - TOWER_RING_BASE_G));
+        u32 b = TOWER_RING_BASE_B + Q_8_8_TO_INT(intensity * (TOWER_RING_GLOW_B - TOWER_RING_BASE_B));
 
         u16 color = RGB(r, g, b);
-        LoadPalette(&color, BG_PLTT_ID(14) + 15, sizeof(color));
-   }
+        LoadPalette(&color, TOWER_RING_PAL_INDEX, sizeof(color));
+    }
 }
