@@ -36,7 +36,7 @@ enum {
 #define VERSION_BANNER_RIGHT_X 162
 #define VERSION_BANNER_Y 2
 #define VERSION_BANNER_Y_GOAL 66
-#define START_BANNER_X 128
+#define START_BANNER_X 86
 
 #define CLEAR_SAVE_BUTTON_COMBO (B_BUTTON | SELECT_BUTTON | DPAD_UP)
 #define RESET_RTC_BUTTON_COMBO (B_BUTTON | SELECT_BUTTON | DPAD_LEFT)
@@ -64,7 +64,6 @@ static void CB2_GoToClearSaveDataScreen(void);
 static void CB2_GoToResetRtcScreen(void);
 static void CB2_GoToBerryFixScreen(void);
 static void CB2_GoToCopyrightScreen(void);
-static void UpdateLegendaryMarkingColor(u8);
 static void UpdateTowerRingColor(u8);
 
 static void SpriteCB_VersionBannerLeft(struct Sprite *sprite);
