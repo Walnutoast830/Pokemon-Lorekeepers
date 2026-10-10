@@ -766,11 +766,11 @@ static void Task_TitleScreenPhase2(u8 taskId)
     if (gTasks[taskId].tBg2Y < 0)
         gTasks[taskId].tBg2Y++;
 
-    if (gTasks[taskId].tBg2X < 2)
+    if (gTasks[taskId].tBg2X < 11)
     {
         gTasks[taskId].tBg2X++;
-        if (gTasks[taskId].tBg2X > 2)
-            gTasks[taskId].tBg2X = 2;
+        if (gTasks[taskId].tBg2X > 8)
+            gTasks[taskId].tBg2X = 8;
     }
 }
 
@@ -818,7 +818,7 @@ static void Task_TitleScreenPhase3(u8 taskId)
     {
         SetGpuReg(REG_OFFSET_BG2Y_L, 0 * 256);
         SetGpuReg(REG_OFFSET_BG2Y_H, 0);
-        SetGpuReg(REG_OFFSET_BG2X_L, 2 * 256);
+        SetGpuReg(REG_OFFSET_BG2X_L, 8 * 256);
         SetGpuReg(REG_OFFSET_BG2X_H, 0);
         if (++gTasks[taskId].tCounter & 1)
         {
