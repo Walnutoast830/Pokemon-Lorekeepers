@@ -1229,7 +1229,7 @@ static void PrintMapNameAndTime(void) //this code is ripped froom different part
 #if (FLAG_CLOCK_MODE != 0)
     const u8 *suffix = NULL;
 #endif
-    u8 sTimeTextColors[] = {TEXT_COLOR_TRANSPARENT, 2, 3};
+    u8 sTimeTextColors[] = {TEXT_COLOR_TRANSPARENT, 2, 7};
 
     u16 hours;
     u16 minutes;
@@ -1245,7 +1245,7 @@ static void PrintMapNameAndTime(void) //this code is ripped froom different part
     mapDisplayHeader[0] = EXT_CTRL_CODE_BEGIN;
     mapDisplayHeader[1] = EXT_CTRL_CODE_HIGHLIGHT;
     mapDisplayHeader[2] = TEXT_COLOR_TRANSPARENT;
-    AddTextPrinterParameterized(WINDOW_TOP_BAR, FONT_NARROW, mapDisplayHeader, x + 152, 1, TEXT_SKIP_DRAW, NULL); // Print Map Name
+        AddTextPrinterParameterized3(WINDOW_TOP_BAR, FONT_NARROW, x + 152, 1, sTimeTextColors, TEXT_SKIP_DRAW, withoutPrefixPtr); // Print Map Name // Print Map Name
 
     RtcCalcLocalTime();
 
