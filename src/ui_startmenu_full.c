@@ -160,7 +160,7 @@ static const struct WindowTemplate sStartMenuWindowTemplates[] =
         .baseBlock = 1 + (9 * 15),     // tile start in VRAM
     },
 
-    [WINDOW_BOTTOM_BAR] = // Window ID for the save confirmation box
+    [WINDOW_BOTTOM_BAR] = // Window ID for the bottom bar (no longer used for save confirmation)
     {
         .bg = 0,            // which bg to print text on
         .tilemapLeft = 0,   // position from left (per 8 pixels)
@@ -402,7 +402,7 @@ static const struct CompressedSpriteSheet sSpriteSheet_StatusIcons =
     gStatusGfx_Icons, 0x400, TAG_STATUS_ICONS
 };
 
-static const struct CompressedSpritePalette sSpritePalette_StatusIcons =
+static const struct SpritePalette sSpritePalette_StatusIcons =
 {
     gStatusPal_Icons, TAG_STATUS_ICONS
 };
@@ -620,9 +620,8 @@ static void CreatePartyMonIcons()
     u8 i = 0;
     s16 x = ICON_BOX_1_START_X;
     s16 y = ICON_BOX_1_START_Y;
-    struct Pokemon *mon;
     LoadMonIconPalettes();
-    for(i = 0; i < gPlayerPartyCount; i++)
+    for(i = 0; i < gPartiesCount[B_TRAINER_PLAYER]; i++)
     {   
         switch (i) // choose position for each icon
         {
@@ -653,9 +652,9 @@ static void CreatePartyMonIcons()
         }
 
 #ifdef POKEMON_EXPANSION
-            sStartMenuDataPtr->iconMonSpriteIds[i] = CreateMonIcon(GetMonData(&gPlayerParty[i], MON_DATA_SPECIES_OR_EGG), SpriteCB_MonIcon, x, y, 0, GetMonData(&gPlayerParty[i], MON_DATA_PERSONALITY));
+            sStartMenuDataPtr->iconMonSpriteIds[i] = CreateMonIcon(GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_SPECIES_OR_EGG), SpriteCB_MonIcon, x, y, 0, GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_PERSONALITY));
 #else
-            sStartMenuDataPtr->iconMonSpriteIds[i] = CreateMonIcon(GetMonData(&gPlayerParty[i], MON_DATA_SPECIES_OR_EGG), SpriteCB_MonIcon, x, y, 0, GetMonData(&gPlayerParty[i], MON_DATA_PERSONALITY), TRUE);
+            sStartMenuDataPtr->iconMonSpriteIds[i] = CreateMonIcon(GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_SPECIES_OR_EGG), SpriteCB_MonIcon, x, y, 0, GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_PERSONALITY), TRUE);
 #endif
 
         gSprites[sStartMenuDataPtr->iconMonSpriteIds[i]].oam.priority = 0;
@@ -711,12 +710,12 @@ static const u8 *GetBarGfx(u32 percent)
 
 static bool32 IsMonNotEmpty(u32 partyIndex)
 {
-    return (GetMonData(&gPlayerParty[partyIndex], MON_DATA_SPECIES_OR_EGG, NULL) != SPECIES_NONE);
+    return (GetMonData(&gParties[B_TRAINER_PLAYER][partyIndex], MON_DATA_SPECIES_OR_EGG, NULL) != SPECIES_NONE);
 }
 
 static u32 GetHPEggCyclePercent(u32 partyIndex)
 {
-    struct Pokemon *mon = &gPlayerParty[partyIndex];
+    struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][partyIndex];
     if (!GetMonData(mon, MON_DATA_IS_EGG))
         return ((GetMonData(mon, MON_DATA_HP)) * 100 / (GetMonData(mon,MON_DATA_MAX_HP)));
     else
@@ -839,7 +838,7 @@ static void CreatePartyMonStatuses()
     s16 y = ICON_STATUS_1_START_Y;
     u8 status;
 
-    for(i = 0; i < gPlayerPartyCount; i++)
+    for(i = 0; i < gPartiesCount[B_TRAINER_PLAYER]; i++)
     {   
         switch (i)
         {
@@ -871,7 +870,7 @@ static void CreatePartyMonStatuses()
 
         sStartMenuDataPtr->iconStatusSpriteIds[i] = CreateSprite(&sSpriteTemplate_StatusIcons, x, y, 0);
 
-        status = GetMonAilment(&gPlayerParty[i]);
+        status = GetMonAilment(&gParties[B_TRAINER_PLAYER][i]);
         switch (status)
         {
             case AILMENT_NONE:
@@ -902,7 +901,6 @@ static void DestroyStatusSprites()
 // These next few functions are from the Ghoulslash UI Shell, they are the basic functions to init a brand new UI
 void Task_OpenStartMenuFullScreen(u8 taskId)
 {
-    s16 *data = gTasks[taskId].data;
     if (!gPaletteFade.active)
     {
         CleanupOverworldWindowsAndTilemaps();
@@ -1134,8 +1132,8 @@ static bool8 StartMenuFull_LoadGraphics(void) // Load the Tilesets, Tilemaps, Sp
     case 1:
         if (FreeTempTileDataBuffersIfPossible() != TRUE)
         {
-            LZDecompressWram(sStartMenuTilemap, sBg1TilemapBuffer);
-            LZDecompressWram(sScrollBgTilemap, sBg2TilemapBuffer);
+            DecompressDataWithHeaderWram(sStartMenuTilemap, sBg1TilemapBuffer);
+            DecompressDataWithHeaderWram(sScrollBgTilemap, sBg2TilemapBuffer);
             sStartMenuDataPtr->gfxLoadState++;
         }
         break;
@@ -1160,7 +1158,7 @@ static bool8 StartMenuFull_LoadGraphics(void) // Load the Tilesets, Tilemaps, Sp
         LoadCompressedSpriteSheet(&sSpriteSheet_Cursor);
         LoadSpritePalette(&cursorPal);
         LoadCompressedSpriteSheet(&sSpriteSheet_StatusIcons);
-        LoadCompressedSpritePalette(&sSpritePalette_StatusIcons);
+        LoadSpritePalette(&sSpritePalette_StatusIcons);
 
         LoadCompressedSpriteSheet(&sSpriteSheet_GreyMenuButtonMap);
         LoadCompressedSpriteSheet(&sSpriteSheet_GreyMenuButtonDex);
@@ -1199,26 +1197,6 @@ static void StartMenuFull_InitWindows(void)
 
 
 //
-//  Confirm Save Dialogue Printer
-//
-static const u8 sText_ConfirmSave[] = _("Confirm Save and Return to Overworld?");
-static const u8 sA_ButtonGfx[]         = INCBIN_U8("graphics/ui_startmenu_full/a_button.4bpp");
-static void PrintSaveConfirmToWindow()
-{
-    const u8 *str = sText_ConfirmSave;
-    u8 sConfirmTextColors[] = {TEXT_COLOR_TRANSPARENT, 2, 3};
-    u8 x = 24;
-    u8 y = 0;
-    
-    FillWindowPixelBuffer(WINDOW_BOTTOM_BAR, PIXEL_FILL(5));
-    BlitBitmapToWindow(WINDOW_BOTTOM_BAR, sA_ButtonGfx, 12, 5, 8, 8);
-    AddTextPrinterParameterized4(WINDOW_BOTTOM_BAR, 1, x, y, 0, 0, sConfirmTextColors, 0xFF, str);
-    PutWindowTilemap(WINDOW_BOTTOM_BAR);
-    CopyWindowToVram(WINDOW_BOTTOM_BAR, COPYWIN_FULL);
-}
-
-
-//
 //  Print Time, Location, Day of Week and Time Indicator
 //
 static const u8 sText_Sunday[] = _("Sun.");
@@ -1247,7 +1225,10 @@ static void PrintMapNameAndTime(void) //this code is ripped froom different part
     u8 mapDisplayHeader[24];
     u8 *withoutPrefixPtr;
     u8 x;
-    const u8 *str, *suffix = NULL;
+    const u8 *str;
+#if (FLAG_CLOCK_MODE != 0)
+    const u8 *suffix = NULL;
+#endif
     u8 sTimeTextColors[] = {TEXT_COLOR_TRANSPARENT, 2, 3};
 
     u16 hours;
@@ -1396,8 +1377,8 @@ void Task_OpenPokenavStartMenu(u8 taskId)
     if (!gPaletteFade.active)
     {
         StartMenuFull_FreeResources();
-		PlayRainStoppingSoundEffect();
-		CleanupOverworldWindowsAndTilemaps();
+        PlayRainStoppingSoundEffect();
+        CleanupOverworldWindowsAndTilemaps();
         SetMainCallback2(CB2_InitPokeNav);
     }
 }
@@ -1414,6 +1395,8 @@ void Task_OpenOptionsMenuStartMenu(u8 taskId)
     }
 }
 
+// Fades out, frees the menu, and returns to the overworld. The save dialog itself is
+// run by SaveStartCallback_FullStartMenu (start_menu.c) via gFieldCallback.
 void Task_ReturnToFieldOnSave(u8 taskId)
 {
     if (!gPaletteFade.active)
@@ -1427,41 +1410,9 @@ void Task_ReturnToFieldOnSave(u8 taskId)
 
 
 //
-//  Handle save Confirmation and then Leave to Overworld for Saving 
-//
-# define sFrameToSecondTimer data[6]
-void Task_HandleSaveConfirmation(u8 taskId)
-{
-    if(JOY_NEW(A_BUTTON)) //confirm and leave
-    {
-        PlaySE(SE_SELECT);
-        BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
-        gTasks[taskId].func = Task_ReturnToFieldOnSave;
-        gFieldCallback = SaveStartCallback_FullStartMenu;
-        return;
-    }
-    if(JOY_NEW(B_BUTTON)) // back to normal Menu Control
-    {
-        PlaySE(SE_SELECT);
-        FillWindowPixelBuffer(WINDOW_BOTTOM_BAR, PIXEL_FILL(TEXT_COLOR_TRANSPARENT));
-        PutWindowTilemap(WINDOW_BOTTOM_BAR);
-        CopyWindowToVram(WINDOW_BOTTOM_BAR, COPYWIN_FULL);
-        gTasks[taskId].func = Task_StartMenuFullMain;
-        return;
-    }
-    if(gTasks[taskId].sFrameToSecondTimer >= 60) // every 60 frames update the time
-    {
-        PrintMapNameAndTime();
-        gTasks[taskId].sFrameToSecondTimer = 0;
-    }
-    gTasks[taskId].sFrameToSecondTimer++;
-}
-
-
-
-//
 //  Main Control Function, Grid UI Control
 //
+# define sFrameToSecondTimer data[6]
 static void Task_StartMenuFullMain(u8 taskId)
 {
     if (JOY_NEW(B_BUTTON))
@@ -1548,10 +1499,12 @@ static void Task_StartMenuFullMain(u8 taskId)
         }
     }
 
-    if(JOY_NEW(START_BUTTON)) // If start button pressed go to Save Confirmation Control Task
+    if(JOY_NEW(START_BUTTON)) // START leaves for the overworld and runs the vanilla save dialog
     {
-        PrintSaveConfirmToWindow();
-        gTasks[taskId].func = Task_HandleSaveConfirmation;
+        PlaySE(SE_SELECT);
+        BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
+        gFieldCallback = SaveStartCallback_FullStartMenu;
+        gTasks[taskId].func = Task_ReturnToFieldOnSave;
     }
 
 #if (FLAG_CLOCK_MODE != 0)

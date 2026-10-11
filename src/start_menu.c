@@ -168,7 +168,7 @@ EWRAM_DATA static u8 sStartMenuCursorPos = 0;
 EWRAM_DATA static u8 sNumStartMenuActions = 0;
 EWRAM_DATA static u8 sCurrentStartMenuActions[9] = {0};
 EWRAM_DATA static s8 sInitStartMenuData[2] = {0};
-
+EWRAM_DATA static bool8 sSaveFromFullMenu = FALSE;
 EWRAM_DATA static u8 (*sSaveDialogCallback)(void) = NULL;
 EWRAM_DATA static u8 sSaveDialogTimer = 0;
 EWRAM_DATA static bool8 sSavingComplete = FALSE;
@@ -967,45 +967,42 @@ static void Task_SaveFromStartMenuFull(u8 taskId);
 
 void SaveStartCallback_FullStartMenu(void)
 {
-    WarpFadeInScreen();
+    FreezeObjectEvents();
+    PlayerFreeze();
+    LockPlayerFieldControls();
+    FadeInFromBlack();
+
+    sSaveFromFullMenu = TRUE;
     InitSave();
-    CreateTask( Task_SaveFromStartMenuFull, 0);
-    return;
+    CreateTask(Task_SaveFromStartMenuFull, 0x50);
 }
+
 
 static void Task_SaveFromStartMenuFull(u8 taskId)
 {
-    s16 *state = gTasks[taskId].data;
+    if (gPaletteFade.active)
+        return;
 
-    if (!gPaletteFade.active)
+    switch (RunSaveCallback())
     {
-        switch (*state)
-        {
-            case 0:
-                ShowSaveInfoWindow();
-                *state = 1;
-                break;
-            case 1:
-                ShowSaveMessage(gText_SavingDontTurnOff, SaveDoSaveCallback);
-                *state = 2;
-                break;
-            case 2:
-                if (SaveCallback())
-                    *state = 3;
-                break;
-            case 3:
-                if (SaveCallback())
-                    *state = 4;
-                break;
-            case 4:
-                DestroyTask(taskId);
-                ClearDialogWindowAndFrameToTransparent(0, TRUE);
-                HideSaveMessageWindow();
-                ScriptUnfreezeObjectEvents();
-                UnlockPlayerFieldControls();
-                SoftResetInBattlePyramid();
-                break;
-        }
+    case SAVE_IN_PROGRESS:
+        return;
+    case SAVE_CANCELED: // No / B: back to the full start menu, like vanilla returns to its menu
+        sSaveFromFullMenu = FALSE;
+        ClearDialogWindowAndFrameToTransparent(0, FALSE);
+        DestroyTask(taskId);
+        BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
+        CreateTask(Task_OpenStartMenuFullScreen, 0);
+        return;
+    case SAVE_SUCCESS:
+    case SAVE_ERROR:    // close everything, same ending as vanilla
+        sSaveFromFullMenu = FALSE;
+        ClearDialogWindowAndFrameToTransparent(0, TRUE);
+        DestroyTask(taskId);
+        ScriptUnfreezeObjectEvents();
+        UnlockPlayerFieldControls();
+        SoftResetInBattlePyramid();
+        return;
     }
 }
 
@@ -1169,8 +1166,11 @@ static bool8 SaveErrorTimer(void)
 
 static u8 SaveConfirmSaveCallback(void)
 {
-    ClearStdWindowAndFrame(GetStartMenuWindowId(), FALSE);
-    RemoveStartMenuWindow();
+     if (!sSaveFromFullMenu)
+    {
+        ClearStdWindowAndFrame(GetStartMenuWindowId(), FALSE);
+        RemoveStartMenuWindow();
+    }
     ShowSaveInfoWindow();
 
     if (CurrentBattlePyramidLocation() != PYRAMID_LOCATION_NONE)
@@ -1650,3 +1650,5 @@ void Script_ForceSaveGame(struct ScriptContext *ctx)
     gMenuCallback = SaveCallback;
     sSaveDialogCallback = SaveSavingMessageCallback;
 }
+
+
