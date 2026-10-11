@@ -1120,7 +1120,7 @@ static bool8 StartMenuFull_LoadGraphics(void) // Load the Tilesets, Tilemaps, Sp
         ResetTempTileDataBuffers();
         if (gSaveBlock2Ptr->playerGender == FEMALE)
         {
-            DecompressAndCopyTileDataToVram(1, sStartMenuTilesAlt, 0, 0, 0);
+            DecompressAndCopyTileDataToVram(1, sStartMenuTiles, 0, 0, 0);
         }
         else
         {
@@ -1142,7 +1142,7 @@ static bool8 StartMenuFull_LoadGraphics(void) // Load the Tilesets, Tilemaps, Sp
         struct SpritePalette cursorPal = {sSpritePal_Cursor.data, sSpritePal_Cursor.tag};
         if (gSaveBlock2Ptr->playerGender == FEMALE)
         {
-            LoadPalette(sStartMenuPaletteAlt, 0, 16);
+            LoadPalette(sStartMenuPalette, 0, 16);
             LoadPalette(sHP_PalAlt, 32, 16);
             cursorPal.data = sCursor_PalAlt;
         }
