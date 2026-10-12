@@ -59,6 +59,9 @@
 #include "constants/trainers.h"
 #include "constants/trainer_hill.h"
 #include "constants/weather.h"
+#include "wild_encounter.h"
+#include "constants/battle_mode.h"
+#include "fishing.h"
 
 enum TransitionType
 {
@@ -1091,11 +1094,34 @@ void InitTrainerBattleParameter(void)
     sTrainerBattleEndScript = NULL;
 }
 
+// TRUE when the upcoming trainer battle should run as a double battle, honouring the
+// player's battle mode preference. BATTLE_MODE_MIXED keeps whatever the script and the
+// trainer's own data asked for. A double battle is downgraded back to a single when the
+// trainer only has one Pokemon or the player doesn't have two usable ones, so forcing
+// doubles never leaves the player stuck on the "not enough Pokemon" message.
+static bool32 ShouldTrainerBattleBeDouble(void)
+{
+    bool32 isDouble;
+
+    if (gSaveBlock2Ptr->battleMode == BATTLE_MODE_SINGLES)
+        return FALSE;
+    else if (gSaveBlock2Ptr->battleMode == BATTLE_MODE_DOUBLES)
+        isDouble = TRUE;
+    else
+        isDouble = TRAINER_BATTLE_PARAM.isDoubleBattle
+                || GetTrainerBattleType(TRAINER_BATTLE_PARAM.opponentA) == TRAINER_BATTLE_TYPE_DOUBLES;
+
+    return isDouble
+        && GetTrainerPartySizeFromId(TRAINER_BATTLE_PARAM.opponentA) != 1
+        && GetMonsStateToDoubles_2() == PLAYER_HAS_TWO_USABLE_MONS;
+}
+
 void TrainerBattleLoadArgs(const u8 *data)
 {
     InitTrainerBattleParameter();
     memcpy(gTrainerBattleParameter.data, data, sizeof(TrainerBattleParameter));
     sTrainerBattleEndScript = (u8*)data + sizeof(TrainerBattleParameter);
+    TRAINER_BATTLE_PARAM.isDoubleBattle = ShouldTrainerBattleBeDouble();
 }
 
 // loads trainer A parameter to trainer B. Used for second trainer in trainer_see.c
@@ -1459,7 +1485,7 @@ void BattleSetup_StartTrainerBattle(void)
         }
         else
         {
-            gBattleTypeFlags = (BATTLE_TYPE_TRAINER);
+            gBattleTypeFlags = BATTLE_TYPE_TRAINER;
         }
     }
 
@@ -1499,7 +1525,7 @@ void BattleSetup_StartTrainerBattle(void)
 
         SetHillTrainerFlag();
     }
-    else if (GetTrainerBattleType(TRAINER_BATTLE_PARAM.opponentA) == TRAINER_BATTLE_TYPE_DOUBLES)
+    else if (ShouldTrainerBattleBeDouble())
     {
         gBattleTypeFlags |= BATTLE_TYPE_DOUBLE;
     }
@@ -1613,7 +1639,7 @@ static void CB2_EndTrainerBattle(void)
     }
     else if (IsPlayerDefeated(gBattleOutcome))
     {
-        if (CurrentBattlePyramidLocation() != PYRAMID_LOCATION_NONE || InTrainerHillChallenge() || FlagGet(B_FLAG_NO_WHITEOUT))
+        if (CurrentBattlePyramidLocation() != PYRAMID_LOCATION_NONE || InTrainerHillChallenge() || !NoAliveMonsForPlayer() || FlagGet(B_FLAG_NO_WHITEOUT))
             SetMainCallback2(CB2_ReturnToFieldContinueScriptPlayMapMusic);
         else
             SetMainCallback2(CB2_WhiteOut);
@@ -1654,7 +1680,7 @@ static void CB2_EndRematchBattle(void)
 void BattleSetup_StartRematchBattle(void)
 {
     gBattleTypeFlags = BATTLE_TYPE_TRAINER;
-    if (GetTrainerBattleType(TRAINER_BATTLE_PARAM.opponentA) == TRAINER_BATTLE_TYPE_DOUBLES)
+    if (ShouldTrainerBattleBeDouble())
         gBattleTypeFlags |= BATTLE_TYPE_DOUBLE;
     
     gMain.savedCallback = CB2_EndRematchBattle;
