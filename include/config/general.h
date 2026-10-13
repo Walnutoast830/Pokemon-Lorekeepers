@@ -95,5 +95,6 @@
 #define OPT_BATTLE_MODE              TRUE    // Battle mode (1v1 / 2v2 / Mix) toggle
 #define OPT_BATTLE_SPEED             TRUE    // Battle speed (1x-4x) toggle
 #define OPT_AUTORUN                  FALSE    // Autorun (always sprint) toggle
+#define OPT_DIFFICULTY               TRUE    // Difficulty (Easy/Normal/Hard) toggle
 
 #endif // GUARD_CONFIG_GENERAL_H

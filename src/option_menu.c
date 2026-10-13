@@ -18,6 +18,8 @@
 #include "gba/m4a_internal.h"
 #include "constants/rgb.h"
 #include "constants/battle_mode.h"
+#include "constants/vars.h"
+#include "difficulty.h"
 
 #define tMenuSelection data[0]
 #define tTextSpeed data[1]
@@ -38,6 +40,9 @@
 #endif
 #if OPT_AUTORUN == TRUE
 #define tAutorun data[10]
+#endif
+#if OPT_DIFFICULTY == TRUE
+#define tDifficulty data[11]
 #endif
 #endif // OPT_EXTENDED_OPTIONS_MENU
 
@@ -69,6 +74,9 @@ enum
 #endif
 #if OPT_AUTORUN == TRUE
     MENUITEM_AUTORUN,
+#endif
+#if OPT_DIFFICULTY == TRUE
+    MENUITEM_DIFFICULTY,
 #endif
     MENUITEM_CANCEL_PG2,
     MENUITEM_COUNT_PG2,
@@ -102,6 +110,9 @@ enum
 #endif
 #if OPT_AUTORUN == TRUE
 #define YPOS_AUTORUN         (MENUITEM_AUTORUN * 16)
+#endif
+#if OPT_DIFFICULTY == TRUE
+#define YPOS_DIFFICULTY      (MENUITEM_DIFFICULTY * 16)
 #endif
 #endif // OPT_EXTENDED_OPTIONS_MENU
 
@@ -137,7 +148,7 @@ static u8 FrameType_ProcessInput(u8 selection);
 static void FrameType_DrawChoices(u8 selection);
 static u8 ButtonMode_ProcessInput(u8 selection);
 static void ButtonMode_DrawChoices(u8 selection);
-static void DrawHeaderText(void);
+//static void DrawHeaderText(void);
 #if OPT_EXTENDED_OPTIONS_MENU == TRUE && OPT_BATTLE_MODE == TRUE
 static u8 BattleMode_ProcessInput(u8 selection);
 static void BattleMode_DrawChoices(u8 selection);
@@ -149,6 +160,10 @@ static void BattleSpeed_DrawChoices(u8 selection);
 #if OPT_EXTENDED_OPTIONS_MENU == TRUE && OPT_AUTORUN == TRUE
 static u8 Autorun_ProcessInput(u8 selection);
 static void Autorun_DrawChoices(u8 selection);
+#endif
+#if OPT_EXTENDED_OPTIONS_MENU == TRUE && OPT_DIFFICULTY == TRUE
+static u8 Difficulty_ProcessInput(u8 selection);
+static void Difficulty_DrawChoices(u8 selection);
 #endif
 static void DrawTextOption(void);
 static void DrawOptionMenuTexts(void);
@@ -187,6 +202,9 @@ static const u8 *const sOptionMenuItemsNames_Pg2[MENUITEM_COUNT_PG2] =
 #endif
 #if OPT_AUTORUN == TRUE
     [MENUITEM_AUTORUN]         = gText_Autorun,
+#endif
+#if OPT_DIFFICULTY == TRUE
+    [MENUITEM_DIFFICULTY]      = gText_Difficulty,
 #endif
     [MENUITEM_CANCEL_PG2]      = gText_OptionMenuCancel,
 };
@@ -254,6 +272,32 @@ static void VBlankCB(void)
     TransferPlttBuffer();
 }
 
+#if OPT_EXTENDED_OPTIONS_MENU == TRUE && OPT_DIFFICULTY == TRUE
+    #define MENU_DIFFICULTY_EASY    0
+    #define MENU_DIFFICULTY_NORMAL  1
+    #define MENU_DIFFICULTY_HARD    2
+
+static u8 DifficultyToMenuIndex(u8 difficulty)
+{
+    switch (difficulty)
+    {
+    case DIFFICULTY_EASY: return MENU_DIFFICULTY_EASY;
+    case DIFFICULTY_HARD: return MENU_DIFFICULTY_HARD;
+    default:              return MENU_DIFFICULTY_NORMAL;
+    }
+}
+
+static u8 MenuIndexToDifficulty(u8 index)
+{
+    switch (index)
+    {
+    case MENU_DIFFICULTY_EASY: return DIFFICULTY_EASY;
+    case MENU_DIFFICULTY_HARD: return DIFFICULTY_HARD;
+    default:                   return DIFFICULTY_NORMAL;
+    }
+}
+#endif
+
 static void ReadAllCurrentSettings(u8 taskId)
 {
     gTasks[taskId].tMenuSelection = 0;
@@ -275,6 +319,9 @@ static void ReadAllCurrentSettings(u8 taskId)
 #endif
 #if OPT_AUTORUN == TRUE
     gTasks[taskId].tAutorun = !(gSaveBlock2Ptr->optionsAutoRun);  // Inverted for UI display
+#endif
+#if OPT_DIFFICULTY == TRUE
+    gTasks[taskId].tDifficulty = DifficultyToMenuIndex(GetCurrentDifficultyLevel());
 #endif
 #endif // OPT_EXTENDED_OPTIONS_MENU
 }
@@ -307,6 +354,9 @@ static void DrawOptionsPg2(u8 taskId)
 #endif
 #if OPT_AUTORUN == TRUE
     Autorun_DrawChoices(gTasks[taskId].tAutorun);
+#endif
+# if OPT_DIFFICULTY == TRUE
+    Difficulty_DrawChoices(gTasks[taskId].tDifficulty);
 #endif
     HighlightOptionMenuItem(gTasks[taskId].tMenuSelection);
     CopyWindowToVram(WIN_OPTIONS, COPYWIN_FULL);
@@ -641,7 +691,15 @@ static void Task_OptionMenuProcessInput_Pg2(u8 taskId)
                 Autorun_DrawChoices(gTasks[taskId].tAutorun);
             break;
 #endif
+#if OPT_DIFFICULTY == TRUE
+        case MENUITEM_DIFFICULTY:
+            previousOption = gTasks[taskId].tDifficulty;
+            gTasks[taskId].tDifficulty = Difficulty_ProcessInput(gTasks[taskId].tDifficulty);
 
+            if (previousOption != gTasks[taskId].tDifficulty)
+                Difficulty_DrawChoices(gTasks[taskId].tDifficulty);
+            break;
+#endif
         default:
             return;
         }
@@ -679,6 +737,9 @@ static void SaveCurrentSettings(u8 taskId)
         FlagClear(FLAG_POKEMON_FOLLOWERS);
     else
         FlagSet(FLAG_POKEMON_FOLLOWERS);
+#endif
+#if OPT_DIFFICULTY == TRUE
+    SetCurrentDifficultyLevel(MenuIndexToDifficulty(gTasks[taskId].tDifficulty));
 #endif
 #endif // OPT_EXTENDED_OPTIONS_MENU
 }
@@ -1072,6 +1133,49 @@ static void Autorun_DrawChoices(u8 selection)
         YPOS_AUTORUN, styles[1]);
 }
 #endif // OPT_AUTORUN
+
+#if OPT_EXTENDED_OPTIONS_MENU == TRUE && OPT_DIFFICULTY == TRUE
+static u8 Difficulty_ProcessInput(u8 selection)
+{
+    if (JOY_NEW(DPAD_RIGHT))
+    {
+        if (selection < MENU_DIFFICULTY_HARD)
+            selection++;
+        else
+            selection = MENU_DIFFICULTY_EASY;
+        sArrowPressed = TRUE;
+    }
+    else if (JOY_NEW(DPAD_LEFT))
+    {
+        if (selection > MENU_DIFFICULTY_EASY)
+            selection--;
+        else
+            selection = MENU_DIFFICULTY_HARD;
+        sArrowPressed = TRUE;
+    }
+    return selection;
+}
+
+static void Difficulty_DrawChoices(u8 selection)
+{
+    u8 styles[3] = {0, 0, 0};
+    s32 widthEasy, widthNormal, widthHard, xMid;
+
+    styles[selection] = 1;
+
+    DrawOptionMenuChoice(gText_DifficultyEasy, 104, YPOS_DIFFICULTY, styles[0]);
+
+    widthEasy = GetStringWidth(FONT_NORMAL, gText_DifficultyEasy, 0);
+    widthNormal = GetStringWidth(FONT_NORMAL, gText_DifficultyNormal, 0);
+    widthHard = GetStringWidth(FONT_NORMAL, gText_DifficultyHard, 0);
+
+    widthNormal -= 94;
+    xMid = (widthEasy - widthNormal - widthHard) / 2 + 104;
+    DrawOptionMenuChoice(gText_DifficultyNormal, xMid, YPOS_DIFFICULTY, styles[1]);
+
+    DrawOptionMenuChoice(gText_DifficultyHard, GetStringRightAlignXOffset(FONT_NORMAL, gText_DifficultyHard, 198), YPOS_DIFFICULTY, styles[2]);
+}
+#endif // OPT_DIFFICULTY
 
 static void DrawTextOption(void)
 {
