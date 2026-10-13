@@ -2141,4 +2141,6 @@ extern const u8 gText_Difficulty[];
 extern const u8 gText_DifficultyEasy[];
 extern const u8 gText_DifficultyNormal[];
 extern const u8 gText_DifficultyHard[];
+extern const u8 gMenuText_Check[];
+extern const u8 gMenuText_CheckTag[];
 #endif // GUARD_STRINGS_H
