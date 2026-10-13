@@ -233,6 +233,8 @@
 #define EXT_CTRL_CODE_ENG                    0x16
 #define EXT_CTRL_CODE_PAUSE_MUSIC            0x17
 #define EXT_CTRL_CODE_RESUME_MUSIC           0x18
+#define EXT_CTRL_CODE_CREATE_MUGSHOT         0x19
+#define EXT_CTRL_CODE_DESTROY_MUGSHOT        0x1A
 #define EXT_CTRL_CODE_SPEAKER                0x19
 #define EXT_CTRL_CODE_ACCENT                 0x1A
 #define EXT_CTRL_CODE_BACKGROUND             0x1B
