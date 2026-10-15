@@ -91,7 +91,7 @@
 // If TRUE, enables a second page in the Options menu (navigated with L/R).
 // Individual options below only appear when this master toggle is TRUE.
 #define OPT_EXTENDED_OPTIONS_MENU    TRUE
-#define OPT_FOLLOWERS                FALSE    // Show/hide follower Pokémon toggle
+#define OPT_FOLLOWERS                TRUE    // Show/hide follower Pokémon toggle
 #define OPT_BATTLE_MODE              TRUE    // Battle mode (1v1 / 2v2 / Mix) toggle
 #define OPT_BATTLE_SPEED             TRUE    // Battle speed (1x-4x) toggle
 #define OPT_AUTORUN                  FALSE    // Autorun (always sprint) toggle

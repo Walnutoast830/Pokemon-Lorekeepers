@@ -3,8 +3,10 @@
 @ drumsets
 .include "sound/voicegroups/drumsets/rs.inc"
 .include "sound/voicegroups/drumsets/frlg.inc"
+.include "sound/voicegroups/drumsets/new_vs_wild.inc"
 .include "sound/voicegroups/drumsets/emerald_1.inc"
 .include "sound/voicegroups/drumsets/emerald_2.inc"
+.include "sound/voicegroups/drumsets/voicegroup_emerald_drumset_ff6.inc"
 
 @ key splits
 .include "sound/voicegroups/keysplits/piano.inc"
@@ -315,3 +317,4 @@
 .include "sound/voicegroups/keysplits/gm_breath_noise.inc"
 .include "sound/voicegroups/drumsets/gm_fxset.inc"
 .include "sound/voicegroups/drumsets/gm_drumset.inc"
+.include "sound/voicegroups/new_vs_wild.inc"

@@ -10833,3 +10833,55 @@ DirectSoundWaveData_1165b49::
 	.incbin "sound/direct_sound_samples/1165b49.bin"
 
 @ End universal voicegroup instrument samples
+
+	.align 2
+DirectSoundWaveData_sample_34::
+	.incbin "sound/direct_sound_samples/sample_34.bin"
+
+	.align 2
+DirectSoundWaveData_ff6_drum_sample::
+	.incbin "sound/direct_sound_samples/ff6_drum_sample.bin"
+
+	.align 2
+DirectSoundWaveData_ff6_trumpet::
+	.incbin "sound/direct_sound_samples/ff6_trumpet.bin"
+
+	.align 2
+DirectSoundWaveData_ff6_strings::
+	.incbin "sound/direct_sound_samples/ff6_strings.bin"
+
+	.align 2
+DirectSoundWaveData_ff6_bass::
+	.incbin "sound/direct_sound_samples/ff6_bass.bin"
+
+	.align 2
+DirectSoundWaveData_ff6_overdrive_guitar::
+	.incbin "sound/direct_sound_samples/ff6_overdrive_guitar.bin"
+
+	.align 2
+DirectSoundWaveData_ff6_kick::
+	.incbin "sound/direct_sound_samples/ff6_kick.bin"
+
+	.align 2
+DirectSoundWaveData_ff6_snare::
+	.incbin "sound/direct_sound_samples/ff6_snare.bin"
+
+	.align 2
+DirectSoundWaveData_ff6_closed_hat::
+	.incbin "sound/direct_sound_samples/ff6_closed_hat.bin"
+
+	.align 2
+DirectSoundWaveData_ff6_cymbal_1::
+	.incbin "sound/direct_sound_samples/ff6_cymbal_1.bin"
+
+	.align 2
+DirectSoundWaveData_ff6_cymbal_2::
+	.incbin "sound/direct_sound_samples/ff6_cymbal_2.bin"
+
+	.align 2
+DirectSoundWaveData_ff6_tom::
+	.incbin "sound/direct_sound_samples/ff6_tom.bin"
+
+	.align 2
+DirectSoundWaveData_overdriveguitar_e1r::
+	.incbin "sound/direct_sound_samples/overdriveguitar_e1r.bin"

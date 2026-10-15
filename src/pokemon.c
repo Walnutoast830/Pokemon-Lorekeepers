@@ -5156,7 +5156,7 @@ u16 GetBattleBGM(void)
         if (GetCurrentRegion() == REGION_KANTO)
             return MUS_RG_VS_WILD;
         else
-            return MUS_VS_WILD;
+            return NEW_VS_WILD;
     }
 }
 
