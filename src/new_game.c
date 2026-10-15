@@ -54,6 +54,7 @@
 #include "difficulty.h"
 #include "follower_npc.h"
 #include "constants/battle_mode.h"
+#include "quests.h"
 
 extern const u8 EventScript_ResetAllMapFlags[];
 extern const u8 EventScript_ResetAllMapFlagsFrlg[];
@@ -245,6 +246,7 @@ void NewGameInitData(void)
     ResetItemFlags();
     ResetDexNav();
     ClearFollowerNPCData();
+    QuestMenu_ResetMenuSaveData();
 }
 
 static void ResetMiniGamesRecords(void)
