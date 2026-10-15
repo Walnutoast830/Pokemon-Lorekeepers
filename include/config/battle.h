@@ -358,6 +358,9 @@
 #define B_QUICK_MOVE_CURSOR_TO_RUN          TRUE      // If set to TRUE, pushing B in the battle menu in a wild encounter will move the cursor to the Run option.
 #define B_RUN_TRAINER_BATTLE                TRUE       // If set to TRUE, players can run from Trainer battles as in Gen9+. This is treated as a white out.
 #define B_MOVE_DESCRIPTION_BUTTON           L_BUTTON   // If set to a button other than B_LAST_USED_BALL_BUTTON, pressing this button will open the move description menu.
+#define B_DYNAMIC_MOVE_INFO                 TRUE       // If set to TRUE, the battle move info menu shows a move's real power and accuracy after ability, stat and item modifiers.
+#define B_DYNAMIC_MOVE_INFO_COLORS          TRUE       // If set to TRUE, modified power/accuracy values in the move info menu are colored (green = higher, gray = lower).
+#define B_DYNAMIC_MOVE_INFO_STAT_STAGES     TRUE       // If set to TRUE (with B_DYNAMIC_MOVE_INFO), the shown power is also scaled by the user's attacking stat stage (e.g. x2 after Swords Dance), giving an 'effective power'. Body Press uses Defense; Foul Play is not scaled.
 #define B_SHOW_USELESS_Z_MOVE_INFO          FALSE      // If set to TRUE, Z-Moves without additional effects, like newer generation status moves, will say "No additional effect."
 #define B_ANIMATE_MON_AFTER_KO              TRUE       // If set to TRUE, if a Pokémon on the opposing side faints, the non-fainted Pokémon will play their animations.
 #define B_ANIMATE_MON_AFTER_FAILED_POKEBALL TRUE       // If set to TRUE, a wild Pokémon that breaks of a thrown Poké Ball will play its animation.
