@@ -47,6 +47,7 @@
 #include "link.h"
 #include "frontier_pass.h"
 #include "start_menu.h"
+#include "quests.h"
 
 /*
     Full Screen Start Menu
@@ -89,7 +90,7 @@ enum StartMenuBoxes
     START_MENU_PARTY,
     START_MENU_BAG,
     START_MENU_CARD,
-    START_MENU_MAP,
+    START_MENU_QUEST,
     START_MENU_OPTIONS,
 };
 
@@ -794,7 +795,7 @@ static void CreateGreyedMenuBoxes()
         StartSpriteAnim(&gSprites[sStartMenuDataPtr->greyMenuBoxIds[1]], 0);
     }
 
-    if(!FlagGet(FLAG_SYS_POKENAV_GET))
+    if(!FlagGet(FLAG_SYS_QUEST_MENU_GET))
     {
         if (sStartMenuDataPtr->greyMenuBoxIds[2] == SPRITE_NONE)
             sStartMenuDataPtr->greyMenuBoxIds[2] = CreateSprite(&sSpriteTemplate_GreyMenuButtonMap, CURSOR_LEFT_COL_X, CURSOR_BTM_ROW_Y, 1);
@@ -1220,7 +1221,7 @@ static const u8 * const sDayOfWeekStrings[7] =
 static const u8 sText_AM[] = _("AM");
 static const u8 sText_PM[] = _("PM");
 
-static void PrintMapNameAndTime(void) //this code is ripped froom different parts of pokeemerald and is a mess because of that, but it all works
+static void PrintMapNameAndTime(void) //this code is ripped from different parts of pokeemerald and is a mess because of that, but it all works
 {
     u8 mapDisplayHeader[24];
     u8 *withoutPrefixPtr;
@@ -1229,7 +1230,7 @@ static void PrintMapNameAndTime(void) //this code is ripped froom different part
 #if (FLAG_CLOCK_MODE != 0)
     const u8 *suffix = NULL;
 #endif
-    u8 sTimeTextColors[] = {TEXT_COLOR_TRANSPARENT, 2, 7};
+    u8 sTimeTextColors[] = {TEXT_COLOR_TRANSPARENT, 1, 7};
 
     u16 hours;
     u16 minutes;
@@ -1383,6 +1384,18 @@ void Task_OpenPokenavStartMenu(u8 taskId)
     }
 }
 
+static void Task_OpenQuestMenuStartMenu(u8 taskId)
+{
+    if (!gPaletteFade.active)
+    {
+        StartMenuFull_FreeResources();
+        PlayRainStoppingSoundEffect();
+        CleanupOverworldWindowsAndTilemaps();
+        QuestMenu_Init(0, CB2_ReturnToFullScreenStartMenu);
+        DestroyTask(taskId);
+    }
+}
+
 void Task_OpenOptionsMenuStartMenu(u8 taskId)
 {
     if (!gPaletteFade.active)
@@ -1475,12 +1488,12 @@ static void Task_StartMenuFullMain(u8 taskId)
                     PlaySE(SE_BOO);
                 }
                 break;
-            case START_MENU_MAP:
-                if(FlagGet(FLAG_SYS_POKENAV_GET))
+            case START_MENU_QUEST: // Map button opens the quest menu
+                if(FlagGet(FLAG_SYS_QUEST_MENU_GET))
                 {
                     PlaySE(SE_SELECT);
                     BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
-                    gTasks[taskId].func = Task_OpenPokenavStartMenu;
+                    gTasks[taskId].func = Task_OpenQuestMenuStartMenu;
                 }
                 else{
                     PlaySE(SE_BOO);

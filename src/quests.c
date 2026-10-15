@@ -1503,7 +1503,7 @@ static u8 CountNumberListRows()
 	switch (mode)
 	{
 		case SORT_DEFAULT:
-			return QUEST_COUNT + 1;
+			return CountUnlockedQuests() + 1;
 		case SORT_INACTIVE:
 			return CountInactiveQuests() + 1;
 		case SORT_ACTIVE:
@@ -1577,6 +1577,12 @@ u8 GenerateList(bool8 isFiltered)
 	for (countQuest = 0; countQuest < QUEST_COUNT; countQuest++)
 	{
 		selectedQuestId = *(sortedQuestList + countQuest);
+
+		// Hide quests that haven't been unlocked yet
+		if (!QuestMenu_GetSetQuestState(selectedQuestId, FLAG_GET_UNLOCKED))
+		{
+			continue;
+		}
 
 		if (isFiltered && !QuestMenu_GetSetQuestState(selectedQuestId, mode))
 		{
@@ -1765,7 +1771,8 @@ u8 CountInactiveQuests(void)
 
 	for (i = 0; i < QUEST_COUNT; i++)
 	{
-		if (QuestMenu_GetSetQuestState(i, FLAG_GET_INACTIVE))
+		if (QuestMenu_GetSetQuestState(i, FLAG_GET_UNLOCKED)
+		    && QuestMenu_GetSetQuestState(i, FLAG_GET_INACTIVE))
 		{
 			q++;
 		}
