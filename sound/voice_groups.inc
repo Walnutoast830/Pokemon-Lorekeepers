@@ -318,3 +318,4 @@
 .include "sound/voicegroups/drumsets/gm_fxset.inc"
 .include "sound/voicegroups/drumsets/gm_drumset.inc"
 .include "sound/voicegroups/new_vs_wild.inc"
+.include "sound/voicegroups/new_vs_trainer.inc"

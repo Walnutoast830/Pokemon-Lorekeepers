@@ -234,6 +234,16 @@ static const u8 sText_DotSpace[] = _(". ");
 static const u8 sText_Close[] = _("Close");
 static const u8 sText_ColorGreen[] = _("{COLOR}{GREEN}");
 static const u8 sText_AZ[] = _(" A-Z");
+static const u16 sQuestMenuTextPal[16] =
+{
+    [0] = RGB(0, 0, 0),   
+    [1] = RGB(31, 31, 31), 
+    [2] = RGB(12, 12, 13),  
+    [3] = RGB(21, 21, 21),  
+    [4] = RGB(28, 6, 6),    
+    [6] = RGB(0, 20, 1),    
+    [8] = RGB(4, 10, 26),   
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 //////////////////////BEGIN SUBQUEST CUSTOMIZATION/////////////////////////////
@@ -923,7 +933,7 @@ static const u8 sQuestMenuWindowFontColors[][4] =
 	{
 		//Header of Quest Menu
 		TEXT_COLOR_TRANSPARENT,
-		TEXT_COLOR_DARK_GRAY,
+		TEXT_COLOR_WHITE,
 		TEXT_COLOR_TRANSPARENT
 	},
 	{
@@ -1154,9 +1164,10 @@ static bool8 LoadGraphics(void)
 			}
 			break;
 		case 2:
-			LoadPalette(sQuestMenuBgPals, 0x00, 0x60);
-			sStateDataPtr->data[0]++;
-			break;
+			LoadPalette(sQuestMenuBgPals, BG_PLTT_ID(0), PLTT_SIZE_4BPP);
+    		LoadPalette(sQuestMenuTextPal, BG_PLTT_ID(15), PLTT_SIZE_4BPP);
+    		sStateDataPtr->data[0]++;
+    		break;
 		case 3:
 			sStateDataPtr->data[0]++;
 			break;
