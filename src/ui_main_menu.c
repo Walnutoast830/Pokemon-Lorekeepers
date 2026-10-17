@@ -43,6 +43,9 @@
 #include "mystery_event_menu.h"
 #include "mystery_gift_menu.h"
 #include "link.h"
+#include "event_object_movement.h"
+#include "field_player_avatar.h"
+#include "constants/event_objects.h"
 
 /*
  * 
@@ -56,6 +59,7 @@ struct MainMenuResources
     u16 iconBoxSpriteIds[6];
     u16 iconMonSpriteIds[6];
     u16 mugshotSpriteId;
+    u8 playerSpriteId;
     u8 sSelectedOption;
 };
 
@@ -122,6 +126,8 @@ static void DestroyIconShadow();
 static u32 GetHPEggCyclePercent(u32 partyIndex);
 static void CreatePartyMonIcons();
 static void DestroyMonIcons();
+static void CreatePlayerSprite();
+static void DestroyPlayerSprite();
 
 
 //==========Background and Window Data==========//
@@ -163,7 +169,7 @@ static const struct WindowTemplate sMainMenuWindowTemplates[] =
     [WINDOW_MIDDLE] = // Prints the name, dex number, and badges
     {
         .bg = 0,                   // which bg to print text on
-        .tilemapLeft = 8,          // position from left (per 8 pixels)
+        .tilemapLeft = 3,          // position from left (per 8 pixels)
         .tilemapTop = 4,           // position from top (per 8 pixels)
         .width = 18,               // width (per 8 pixels)
         .height = 7,               // height (per 8 pixels)
@@ -383,7 +389,7 @@ void MainMenu_Init(MainCallback callback)
         sMainMenuDataPtr->iconBoxSpriteIds[i] = SPRITE_NONE;
         sMainMenuDataPtr->iconMonSpriteIds[i] = SPRITE_NONE;
     }
-    
+    sMainMenuDataPtr->playerSpriteId = SPRITE_NONE;
     SetMainCallback2(MainMenu_RunSetup);
 }
 
@@ -418,13 +424,13 @@ static void MainMenu_VBlankCB(void)
 //
 static void MainMenu_FreeResources(void)
 {
+    DestroyPlayerSprite();
+    DestroyIconShadow();
+    DestroyMonIcons();
+    FreeAllWindowBuffers();
     try_free(sMainMenuDataPtr);
     try_free(sBg1TilemapBuffer);
     try_free(sBg2TilemapBuffer);
-    FreeAllWindowBuffers();
-    DestroyMugshot();
-    DestroyIconShadow();
-    DestroyMonIcons();
     DmaClearLarge16(3, (void *)VRAM, VRAM_SIZE, 0x1000);
 }
 
@@ -529,7 +535,8 @@ static bool8 MainMenu_DoGfxSetup(void)
         PrintToWindow(WINDOW_HEADER, FONT_WHITE);
         CreateIconShadow();
         CreatePartyMonIcons();
-        CreateMugshot();
+       //CreateMugshot();
+        CreatePlayerSprite();
         CreateTask(Task_MainMenuWaitFadeIn, 0);
         BlendPalettes(0xFFFFFFFF, 16, RGB_BLACK);
         gMain.state++;
@@ -622,11 +629,11 @@ static bool8 MainMenu_LoadGraphics(void) // Load all the tilesets, tilemaps, spr
         {
             if (gSaveBlock2Ptr->playerGender == MALE)
             {
-                LZDecompressWram(sMainBgTilemap, sBg1TilemapBuffer);
+                DecompressDataWithHeaderWram(sMainBgTilemap, sBg1TilemapBuffer);
             }
             else
             {
-                LZDecompressWram(sMainBgTilemapFem, sBg1TilemapBuffer);
+                DecompressDataWithHeaderWram(sMainBgTilemapFem, sBg1TilemapBuffer);
             }
             sMainMenuDataPtr->gfxLoadState++;
         }
@@ -639,28 +646,17 @@ static bool8 MainMenu_LoadGraphics(void) // Load all the tilesets, tilemaps, spr
     case 3:
         if (FreeTempTileDataBuffersIfPossible() != TRUE)
         {
-            LZDecompressWram(sScrollBgTilemap, sBg2TilemapBuffer);
+            DecompressDataWithHeaderWram(sScrollBgTilemap, sBg2TilemapBuffer);
             sMainMenuDataPtr->gfxLoadState++;
         }
         break;
     case 4:
     {
-        if(gSaveBlock2Ptr->playerGender == MALE)
-        {
             LoadCompressedSpriteSheet(&sSpriteSheet_IconBox);
             LoadSpritePalette(&sSpritePal_IconBox);
-            LoadCompressedSpriteSheet(&sSpriteSheet_BrendanMugshot);
-            LoadSpritePalette(&sSpritePal_BrendanMugshot);
-            LoadPalette(sMainBgPalette, 0, 32);
-        }
-        else
-        {
-            LoadCompressedSpriteSheet(&sSpriteSheet_IconBoxFem);
-            LoadSpritePalette(&sSpritePal_IconBoxFem);
-            LoadCompressedSpriteSheet(&sSpriteSheet_MayMugshot);
-            LoadSpritePalette(&sSpritePal_MayMugshot);
-            LoadPalette(sMainBgPaletteFem, 0, 32);
-        }
+            //LoadCompressedSpriteSheet(&sSpriteSheet_BrendanMugshot);
+            //LoadSpritePalette(&sSpritePal_BrendanMugshot);
+            LoadPalette(sMainBgPalette, 0, 32);;
         LoadPalette(sScrollBgPalette, 16, 32);
     }
         sMainMenuDataPtr->gfxLoadState++;
@@ -706,6 +702,25 @@ static void DestroyMugshot()
 {
     DestroySprite(&gSprites[sMainMenuDataPtr->mugshotSpriteId]);
     sMainMenuDataPtr->mugshotSpriteId = SPRITE_NONE;
+}
+
+#define PLAYER_SPRITE_X  64
+#define PLAYER_SPRITE_Y  34 
+
+static void CreatePlayerSprite(void)
+{
+    u8 spriteId = CreateObjectGraphicsSprite(OBJ_EVENT_GFX_BRENDAN_NORMAL, SpriteCallbackDummy,PLAYER_SPRITE_X, PLAYER_SPRITE_Y, 0);
+    if (spriteId == MAX_SPRITES)
+        return;
+    sMainMenuDataPtr->playerSpriteId = spriteId;
+    gSprites[spriteId].oam.priority = 0;
+    StartSpriteAnim(&gSprites[spriteId], GetMoveDirectionAnimNum(DIR_SOUTH));
+}
+
+static void DestroyPlayerSprite(void)
+{
+    DestroySprite(&gSprites[sMainMenuDataPtr->playerSpriteId]);
+    sMainMenuDataPtr->playerSpriteId = SPRITE_NONE;
 }
 
 //
@@ -828,10 +843,13 @@ static void DestroyMonIcons()
 //
 //  Print The Text For Dex Num, Badges, Name, Playtime, Location
 //
-static const u8 sText_DexNum[] = _("Dex {STR_VAR_1}");
-static const u8 sText_Badges[] = _("Badges {STR_VAR_1}");
+static const u8 sText_DexNum[] = _("Pokédex: {STR_VAR_1}");
+static const u8 sText_Badges[] = _("Marks: {STR_VAR_1}");
 static void PrintToWindow(u8 windowId, u8 colorIdx)
-{
+{   
+    #define NAME_TEXT_ID 14
+    #define NAME_SHADOW_ID 15
+    static const u8 sNameColors[3] = {TEXT_COLOR_TRANSPARENT, NAME_TEXT_ID, NAME_SHADOW_ID};
     const u8 colors[3] = {0,  2,  3}; 
     u8 mapDisplayHeader[24];
     u8 *withoutPrefixPtr, *playTimePtr;
@@ -862,9 +880,9 @@ static void PrintToWindow(u8 windowId, u8 colorIdx)
             dexCount = GetNationalPokedexCount(FLAG_GET_CAUGHT);
         else
             dexCount = GetHoennPokedexCount(FLAG_GET_CAUGHT);
-        ConvertIntToDecimalStringN(gStringVar1, dexCount, STR_CONV_MODE_RIGHT_ALIGN, 4);
+        ConvertIntToDecimalStringN(gStringVar1, dexCount, STR_CONV_MODE_LEFT_ALIGN, 4);
         StringExpandPlaceholders(gStringVar4, sText_DexNum);
-        AddTextPrinterParameterized4(WINDOW_MIDDLE, FONT_NORMAL, 8 + 8, 16 + 2, 0, 0, colors, TEXT_SKIP_DRAW, gStringVar4);
+        AddTextPrinterParameterized4(WINDOW_MIDDLE, FONT_NORMAL, 0, 16 + 2, 0, 0, colors, TEXT_SKIP_DRAW, gStringVar4);
     }
 
     // Print Badge Numbers if You Have Them
@@ -875,10 +893,10 @@ static void PrintToWindow(u8 windowId, u8 colorIdx)
     } 
     ConvertIntToDecimalStringN(gStringVar1, badgeCount, STR_CONV_MODE_LEADING_ZEROS, 1);
     StringExpandPlaceholders(gStringVar4, sText_Badges);
-    AddTextPrinterParameterized4(WINDOW_MIDDLE, FONT_NORMAL, 16, 32 + 2, 0, 0, colors, TEXT_SKIP_DRAW, gStringVar4);
+    AddTextPrinterParameterized4(WINDOW_MIDDLE, FONT_NORMAL, 0, 32 + 2, 0, 0, colors, TEXT_SKIP_DRAW, gStringVar4);
 
     // Print Player Name
-    AddTextPrinterParameterized3(WINDOW_MIDDLE, FONT_NORMAL, 16, 2, colors, TEXT_SKIP_DRAW, gSaveBlock2Ptr->playerName);
+    AddTextPrinterParameterized3(WINDOW_MIDDLE, FONT_NORMAL, 0, 2, sNameColors, TEXT_SKIP_DRAW, gSaveBlock2Ptr->playerName);
 
     PutWindowTilemap(WINDOW_HEADER);
     CopyWindowToVram(WINDOW_HEADER, 3);
