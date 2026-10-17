@@ -278,6 +278,7 @@ static const u8 gText_ContinueMenuTime[] = _("TIME");
 static const u8 gText_ContinueMenuPokedex[] = _("POKéDEX");
 static const u8 gText_ContinueMenuBadges[] = _("BADGES");
 static const u16 sBirchSpeechPlatformBlackPal[] = {RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB_BLACK, RGB_BLACK};
+static const u8 sPlayerName[] = _("Xan");
 
 #define MENU_LEFT 2
 #define MENU_TOP_WIN0 1
@@ -1334,7 +1335,7 @@ void CB2_NewGameBirchSpeech_FromNewMainMenu(void) // Combination of the Above fu
 {
     u8 taskId;
     u8 spriteId;
-    u16 savedIme;
+    u16 savedTime;
     
 
     ResetBgsAndClearDma3BusyFlags(0);
